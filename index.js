@@ -24,8 +24,7 @@
 
     function getValues (line, sep) {
         return line.split(sep).map(function(value){
-            var value = unquote(value);
-            var numeric = +value;
+            var numeric = +unquote(value);
             return (numeric === numeric) ? numeric : value; // take advantage of NaN !== NaN
         })
     }
