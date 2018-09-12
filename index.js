@@ -1,93 +1,116 @@
-(function(){
+(function() {
 
-    var br = "\n"
+  var br = '\n';
 
-    function extend (o) {
-        Array.prototype.slice.call(arguments, 1).forEach(function(source){
-            if (!source) return
-            for (var keys = Object.keys(source), i = 0; i < keys.length; i++) {
-                var key = keys[i]
-                o[key] = source[key]
-            }
-        })
-        return o
-    }
+  function extend(o) {
+    Array.prototype.slice.call(arguments, 1).forEach(function(source) {
+      if (!source) return;
+      for (var keys = Object.keys(source), i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        o[key] = source[key];
+      }
+    });
+    return o;
+  }
 
-    function unquote (str) {
-        var match
-        return (match = str.match(/(['"]?)(.*)\1/)) && match[2] || str
-    }
+  /**
+   * Strips comments from the line
+   * @param str
+   * @return {RegExpMatchArray | Promise<Response | undefined> | *}
+   */
+  function unquote(str) {
+    var match;
+    return (match = str.match(/(['"]?)(.*)\1/)) && match[2] || str;
+  }
 
-    function comments (line) {
-        return !/#@/.test(line[0])
-    }
+  /**
+   * Filter comments
+   * @param line
+   * @return {boolean}
+   */
+  function comments(line) {
+    return !/#@/.test(line[0]);
+  }
 
-    function getValues (line, sep) {
-        return line.split(sep).map(function(value){
-            var unquoted_value = unquote(value);
-            return isNaN(unquoted_value) ? value : +unquoted_value;
-        })
-    }
+  /**
+   * Filter empty lines
+   * @param line
+   */
+  function empty(line) {
+    return line.trim() !== '';
+  }
 
-    function Parser (sep, options) {
-        var opt = extend({
-            header: true
-        }, options)
+  /**
+   * Retrieves values from line
+   * @param line
+   * @param sep
+   * @return {any[]}
+   */
+  function getValues(line, sep) {
+    return line.split(sep);
+  }
 
-        this.sep = sep
-        this.header = opt.header
-    }
+  function Parser(sep, options) {
+    var opt = extend({
+      header: true
+    }, options);
 
-    Parser.prototype.stringify = function (data) {
-        var sep    = this.sep
-          , head   = !!this.header
-          , keys   = (typeof data[0] === 'object') && Object.keys(data[0])
-          , header = keys && keys.join(sep)
-          , output = head ? (header + br) : ''
+    this.sep = sep;
+    this.header = opt.header;
+  }
 
-        if (!data || !keys) return ''
-            
-        return output + data.map(function(obj){
-            var item = keys ? {} : []
-            var values = keys.reduce(function(p, key){
-                p.push(obj[key])
-                return p
-            }, [])
-            return values.join(sep)
-        }).join(br)
-    }
+  Parser.prototype.stringify = function(data) {
+    var sep = this.sep
+      , head = !!this.header
+      , keys = (typeof data[0] === 'object') && Object.keys(data[0])
+      , header = keys && keys.join(sep)
+      , output = head ? (header + br) : '';
 
-    Parser.prototype.parse = function (tsv) {
-        var sep   = this.sep
-          , lines = tsv.split(/[\n\r]/).filter(comments)
-          , head  = !!this.header
-          , keys  = head ? getValues(lines.shift(), sep) : {}
+    if (!data || !keys) return '';
 
-        if (lines.length < 1) return []
+    return output + data.map(function(obj) {
+      var values = keys.reduce(function(p, key) {
+        p.push(obj[key]);
+        return p;
+      }, []);
+      return values.join(sep);
+    }).join(br);
+  };
 
-        return lines.reduce(function(output, line){
-            var item = head ? {} : []
-            output.push(getValues(line, sep).reduce(function(item, val, i){
-                item[keys[i] || i] = val
-                return item
-            }, item))
-            return output
-        }, [])
-    }
+  Parser.prototype.parse = function(tsv) {
+    var sep = this.sep
+      , lines = tsv.split(/[\n\r]/).filter(comments).filter(empty)
+      , head = !!this.header;
 
-    // Export TSV parser as main, but also expose `.TSV`, `.CSV` and `.Parser`.
-    var TSV = new Parser("\t")
+    if (lines.length === 0) return [];
 
-    extend(TSV, {
-        TSV    : TSV
-      , CSV    : new Parser(",")
-      , Parser : Parser
-    })
+    var keys = head ? getValues(lines.shift(), sep).map(unquote) : {};
 
-    if (typeof module !== 'undefined' && module.exports){
-        module.exports = TSV
-    } else {
-        this.TSV = TSV
-    }
+    if (lines.length < 1) return [];
 
-}).call(this)
+    return lines.reduce(function(output, line) {
+      var item = head ? {} : [];
+      output.push(getValues(line, sep).reduce(function(item, val, i) {
+        item[keys[i] || i] = val;
+        return item;
+      }, item));
+      return output;
+    }, []);
+  };
+
+  // Export TSV parser as main, but also expose `.TSV`, `.CSV` and `.Parser`.
+  var TSV = new Parser('\t');
+
+  extend(TSV, {
+    TSV: TSV
+    , CSV: new Parser(',')
+    , Parser: Parser
+  });
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TSV;
+  } else {
+    this.TSV = TSV;
+  }
+
+}).call(this);

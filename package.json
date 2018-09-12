@@ -13,20 +13,16 @@
     "delimited",
     "d3"
   ],
-  "dependencies": {
-  },
   "devDependencies": {
-    "flour": "",
-    "mocha": "",
-    "coffee-script": ""
+    "jest": "^23.6.0"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/ricardobeat/TSV.git"
+    "url": "git://github.com/neutrinog/TSV.git"
   },
-  "author": "Ricardo Tomasi",
-  "license": "MIT (ricardo.mit-license.org)"
+  "author": "Joel Lonbeck",
+  "license": "MIT"
 }
