@@ -1,5 +1,5 @@
 {
-  "name": "tsv",
+  "name": "@neutrinog/tsv",
   "description": "Simple dependency-free TSV and CSV converter/parser",
   "version": "0.2.0",
   "main": "index.js",
